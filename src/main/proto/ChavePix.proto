@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "br.com.zup.edu";
+option java_outer_classname = "ChavePix";
+
+package br.com.zup.edu;
+
+import "google/protobuf/timestamp.proto";
+
+service ChavePixService {
+  rpc registrarChavePix (RegistrarChavePixGrpcRequest) returns (RegistrarChavePixGrpcResponse) {}
+  rpc removerChavePix (RemoverChavePixGrpcRequest) returns (RemoverChavePixGrpcResponse) {}
+  rpc consultarChavePixKeyManager(ConsultarChavePixKeyManagerRequest) returns (ConsultarChavePixResponse){}
+  rpc consultarChavePixMicrosservicos(ConsultarChavePixMicrosservicosRequest) returns(ConsultarChavePixResponse){}
+  rpc listarChavePix(ListarChavePixRequest) returns(ListarChavePixResponse){}
+}
+
+enum TipoChave {
+  CPF = 0;
+  PHONE = 1;
+  EMAIL = 2;
+  RANDOM= 3;
+}
+enum TipoConta {
+  CACC = 0;
+  SVGS = 1;
+}
+
+message RegistrarChavePixGrpcRequest {
+  string idCliente = 1;
+  TipoChave tipoChave = 2;
+  string chave = 3;
+  TipoConta tipoConta = 4;
+}
+
+message RegistrarChavePixGrpcResponse {
+  string idChavePix = 1;
+}
+
+message RemoverChavePixGrpcRequest {
+  string idCliente = 1;
+  string idChavePix = 2;
+}
+
+message RemoverChavePixGrpcResponse {
+  string idChavePix = 1;
+}
+
+message ConsultarChavePixKeyManagerRequest {
+  string idCliente = 1;
+  string idChavePix = 2;
+}
+
+message ConsultarChavePixResponse {
+  optional string idCliente = 1;
+  optional string idChavePix = 2;
+  TipoChave tipoChave = 3;
+  string chave = 4;
+  string nome = 5;
+  string cpf = 6;
+  Conta conta = 7;
+  google.protobuf.Timestamp criadoEm = 8;
+}
+
+message Conta{
+  string instituicao = 1;
+  string agencia = 2;
+  string numero = 3;
+  TipoConta tipoConta = 4;
+}
+
+message ConsultarChavePixMicrosservicosRequest {
+  string chave = 1;
+}
+
+message ListarChavePixRequest {
+  string clientId = 1;
+}
+
+message ListarChavePixResponse {
+  message Chave {
+    optional string idCliente = 1;
+    optional string idChavePix = 2;
+    TipoChave tipoChave = 3;
+    string chave = 4;
+    TipoConta tipoConta = 5;
+    google.protobuf.Timestamp criadoEm = 8;
+  }
+  repeated Chave chaves = 1;
+}
