@@ -21,7 +21,7 @@ import javax.inject.Singleton
 
 
 @MicronautTest(transactional = false)
-internal class ChavePixControllerTest(){
+internal class ChavePixRegisterTest(){
     @Inject
     lateinit var grpcClient: ChavePixServiceGrpc.ChavePixServiceBlockingStub
 

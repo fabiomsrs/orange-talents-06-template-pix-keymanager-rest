@@ -1,16 +1,16 @@
 package br.com.zup.fabiano.controller
 
-import br.com.zup.edu.ChavePix
-import br.com.zup.edu.ChavePixServiceGrpc
-import br.com.zup.edu.RegistrarChavePixGrpcRequest
-import br.com.zup.edu.RegistrarChavePixGrpcResponse
+import br.com.zup.edu.*
+import br.com.zup.fabiano.dto.ChavePixDeleteRequest
 import br.com.zup.fabiano.dto.ChavePixRegisterRequest
-import br.com.zup.fabiano.shared.utils.GrpcStatusErrorParaHttpStatusError
+import br.com.zup.fabiano.shared.converterError.CadastroChavePixConverterError
+import br.com.zup.fabiano.shared.converterError.DeleteChavePixConverterError
 import io.grpc.StatusRuntimeException
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MutableHttpResponse
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.http.uri.UriBuilder
@@ -38,7 +38,23 @@ class ChavePixController(@Inject val grpcClient: ChavePixServiceGrpc.ChavePixSer
                 .expand(mutableMapOf(Pair("id", response.idChavePix)))
             return HttpResponse.created<String?>(uri).body(response.idChavePix)
         }catch (e: StatusRuntimeException){
-            throw HttpStatusException(GrpcStatusErrorParaHttpStatusError.converter(e), e.status.description)
+            throw HttpStatusException(CadastroChavePixConverterError.converter(e), e.status.description)
+        }
+    }
+
+    @Delete("/api/chave-pix")
+    fun deletarChavePix(@Body @Valid request: ChavePixDeleteRequest): MutableHttpResponse<String>? {
+        val grpcRequest = RemoverChavePixGrpcRequest
+            .newBuilder()
+            .setIdChavePix(request.idChavePix)
+            .setIdCliente(request.idClient)
+            .build()
+
+        try{
+            val response = grpcClient.removerChavePix(grpcRequest)
+            return HttpResponse.ok()
+        }catch (e: StatusRuntimeException){
+            throw HttpStatusException(DeleteChavePixConverterError.converter(e), e.status.description)
         }
     }
 }
