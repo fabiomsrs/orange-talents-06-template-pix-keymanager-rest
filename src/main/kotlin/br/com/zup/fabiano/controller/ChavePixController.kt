@@ -1,20 +1,24 @@
 package br.com.zup.fabiano.controller
 
-import br.com.zup.edu.*
+import br.com.zup.edu.ChavePixServiceGrpc
+import br.com.zup.edu.ConsultarChavePixKeyManagerRequest
+import br.com.zup.edu.RegistrarChavePixGrpcRequest
+import br.com.zup.edu.RemoverChavePixGrpcRequest
 import br.com.zup.fabiano.dto.ChavePixDeleteRequest
+import br.com.zup.fabiano.dto.ChavePixDetalheResponse
 import br.com.zup.fabiano.dto.ChavePixRegisterRequest
+import br.com.zup.fabiano.dto.Titular
 import br.com.zup.fabiano.shared.converterError.CadastroChavePixConverterError
 import br.com.zup.fabiano.shared.converterError.DeleteChavePixConverterError
 import io.grpc.StatusRuntimeException
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MutableHttpResponse
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Delete
-import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.*
 import io.micronaut.http.exceptions.HttpStatusException
 import io.micronaut.http.uri.UriBuilder
 import io.micronaut.validation.Validated
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.validation.Valid
 
@@ -53,6 +57,35 @@ class ChavePixController(@Inject val grpcClient: ChavePixServiceGrpc.ChavePixSer
         try{
             val response = grpcClient.removerChavePix(grpcRequest)
             return HttpResponse.ok()
+        }catch (e: StatusRuntimeException){
+            throw HttpStatusException(DeleteChavePixConverterError.converter(e), e.status.description)
+        }
+    }
+
+    @Get("/api/chave-pix/{id}/idClient/{idClient}")
+    fun detalheChavePix(@PathVariable id: Long, @PathVariable idClient: String) : MutableHttpResponse<ChavePixDetalheResponse> {
+        val grpcRequest = ConsultarChavePixKeyManagerRequest
+            .newBuilder()
+            .setIdChavePix(id.toString())
+            .setIdCliente(idClient)
+            .build()
+
+        try{
+            val response = grpcClient.consultarChavePixKeyManager(grpcRequest)
+            return HttpResponse.ok<ChavePixDetalheResponse>().body(
+                ChavePixDetalheResponse(
+                    response.idCliente,
+                    response.idChavePix,
+                    response.tipoChave,
+                    response.chave,
+                    Titular(response.nome, response.cpf),
+                    LocalDateTime.ofEpochSecond(
+                        response.criadoEm.seconds,
+                        response.criadoEm.nanos,
+                        ZoneOffset.UTC
+                    )
+                )
+            )
         }catch (e: StatusRuntimeException){
             throw HttpStatusException(DeleteChavePixConverterError.converter(e), e.status.description)
         }
