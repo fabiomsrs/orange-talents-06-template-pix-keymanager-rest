@@ -1,13 +1,7 @@
 package br.com.zup.fabiano.controller
 
-import br.com.zup.edu.ChavePixServiceGrpc
-import br.com.zup.edu.ConsultarChavePixKeyManagerRequest
-import br.com.zup.edu.RegistrarChavePixGrpcRequest
-import br.com.zup.edu.RemoverChavePixGrpcRequest
-import br.com.zup.fabiano.dto.ChavePixDeleteRequest
-import br.com.zup.fabiano.dto.ChavePixDetalheResponse
-import br.com.zup.fabiano.dto.ChavePixRegisterRequest
-import br.com.zup.fabiano.dto.Titular
+import br.com.zup.edu.*
+import br.com.zup.fabiano.dto.*
 import br.com.zup.fabiano.shared.converterError.CadastroChavePixConverterError
 import br.com.zup.fabiano.shared.converterError.DeleteChavePixConverterError
 import io.grpc.StatusRuntimeException
@@ -57,6 +51,38 @@ class ChavePixController(@Inject val grpcClient: ChavePixServiceGrpc.ChavePixSer
         try{
             val response = grpcClient.removerChavePix(grpcRequest)
             return HttpResponse.ok()
+        }catch (e: StatusRuntimeException){
+            throw HttpStatusException(DeleteChavePixConverterError.converter(e), e.status.description)
+        }
+    }
+
+    @Get("/api/chave-pix/idClient/{idClient}")
+    fun listarChavePix(@PathVariable idClient: String) : MutableHttpResponse<MutableList<ChavePixResponse>>? {
+        val grpcRequest = ListarChavePixRequest
+            .newBuilder()
+            .setClientId(idClient)
+            .build()
+
+        try{
+            val listaChave: MutableList<ChavePixResponse> = mutableListOf()
+
+            grpcClient.listarChavePix(grpcRequest).let { response ->
+                response.chavesList.map { chave ->
+                    listaChave.add(ChavePixResponse(
+                        chave.idCliente,
+                        chave.idChavePix,
+                        chave.tipoChave,
+                        chave.chave,
+                        chave.tipoConta,
+                        LocalDateTime.ofEpochSecond(
+                            chave.criadoEm.seconds,
+                            chave.criadoEm.nanos,
+                            ZoneOffset.UTC
+                        )
+                    ))
+                }
+            }
+            return HttpResponse.ok<MutableList<ChavePixResponse>>().body(listaChave)
         }catch (e: StatusRuntimeException){
             throw HttpStatusException(DeleteChavePixConverterError.converter(e), e.status.description)
         }
